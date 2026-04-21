@@ -17,7 +17,6 @@
             padding: 16px;
             background: #f0f4f8;
             text-align: center;
-            min-height: 100vh;
         }
         .card {
             background: white;
@@ -36,35 +35,15 @@
             margin: 8px;
             cursor: pointer;
             font-weight: 600;
-            transition: background 0.2s;
-            position: relative;
-            z-index: 10;
             touch-action: manipulation;
             -webkit-appearance: none;
         }
         button:active {
             background: #0044cc;
         }
-        .interval-btn, .control-btn {
+        .control-btn {
             background: #e0e7ff;
             color: #1e293b;
-        }
-        .interval-btn.active, .control-btn.active {
-            background: #0066ff;
-            color: white;
-        }
-        #exercise {
-            font-size: 22px;
-            font-weight: bold;
-            margin: 20px 0;
-            line-height: 1.4;
-        }
-        #timer {
-            font-size: 48px;
-            font-family: monospace;
-            font-weight: bold;
-            margin: 16px 0;
-            color: #0066ff;
         }
         .flex-row {
             display: flex;
@@ -77,12 +56,6 @@
             background: #f8fafc;
             border-radius: 24px;
             padding: 12px;
-            margin-top: 10px;
-        }
-        .time-settings label {
-            font-size: 14px;
-            display: inline-block;
-            margin: 5px;
         }
         input, select {
             padding: 8px;
@@ -96,7 +69,6 @@
             border-radius: 30px;
             height: 20px;
             width: 100%;
-            overflow: hidden;
             margin: 10px 0;
         }
         .progress-fill {
@@ -106,40 +78,33 @@
             border-radius: 30px;
             transition: width 0.3s;
         }
-        .cool-text {
-            font-size: 16px;
-            font-weight: bold;
-            color: #10b981;
-        }
-        .note {
-            background: #fff9c4;
-            border-radius: 20px;
-            padding: 12px;
-            font-size: 13px;
-            margin-top: 16px;
+        #debug {
+            background: #f1f5f9;
+            font-size: 12px;
+            padding: 8px;
+            border-radius: 16px;
+            margin-top: 10px;
+            word-break: break-all;
         }
     </style>
 </head>
 <body>
 
 <h1>🧘‍♀️ Разминка для работающих</h1>
-<p>Короткие упражнения, чтобы не затекала спина и шея</p>
 
 <div class="card">
-    <h3>⏰ Активное время (когда напоминать)</h3>
+    <h3>⏰ Активное время</h3>
     <div class="time-settings">
-        <label>🕘 С: <input type="time" id="startTime" value="09:00"></label>
-        <label>🕔 До: <input type="time" id="endTime" value="18:00"></label>
-        <label>📅 Интервал: 
+        <label>С: <input type="time" id="startTime" value="09:00"></label>
+        <label>До: <input type="time" id="endTime" value="18:00"></label>
+        <label>Интервал: 
             <select id="intervalSelect">
                 <option value="30">30 мин</option>
                 <option value="60" selected>1 час</option>
                 <option value="120">2 часа</option>
             </select>
         </label>
-        <div class="flex-row">
-            <button id="saveSettingsBtn" class="control-btn">💾 Сохранить настройки</button>
-        </div>
+        <button id="saveSettingsBtn" class="control-btn">💾 Сохранить</button>
     </div>
 </div>
 
@@ -156,73 +121,32 @@
 </div>
 
 <div class="card">
-    <div class="flex-row" style="justify-content: space-between;">
-        <span>🏆 Сегодня: <span id="todayCount">0</span> / <span id="dailyGoal">8</span></span>
-        <button id="resetStatsBtn" class="control-btn" style="padding: 4px 12px;">Сбросить счёт</button>
-    </div>
-    <div class="progress-container">
-        <div class="progress-fill" id="progressFill"></div>
-    </div>
-    <div id="motivationText" class="cool-text"></div>
+    <div>🏆 Сегодня: <span id="todayCount">0</span> / <span id="dailyGoal">8</span></div>
+    <div class="progress-container"><div class="progress-fill" id="progressFill"></div></div>
+    <div id="motivationText"></div>
+    <button id="resetStatsBtn" class="control-btn">Сбросить счёт</button>
 </div>
 
-<div class="note">
-    💡 Разрешите уведомления для напоминаний.<br>
-    🕒 Напоминания работают только в активное время.<br>
-    🎯 Цель — 8 упражнений в день. Вы крутой, если достигаете!
-</div>
+<div id="debug">🔍 Отладка: готово</div>
 
 <script>
     (function() {
-        // ---------- СПИСОК УПРАЖНЕНИЙ ----------
-        const exercises = [
-            { name: "Повернуть голову влево-вправо 5 раз", duration: 15 },
-            { name: "Поднять плечи вверх-вниз 10 раз", duration: 15 },
-            { name: "Свести лопатки, задержаться на 3 секунды — 5 раз", duration: 20 },
-            { name: "Наклоны головы вперёд-назад (осторожно!)", duration: 15 },
-            { name: "Круговые движения кистями 10 раз в каждую сторону", duration: 20 },
-            { name: "Сжать и разжать пальцы рук с усилием 10 раз", duration: 12 },
-            { name: "Встать со стула, потянуться вверх 5 секунд", duration: 15 },
-            { name: "Подъём на носки стоя 10 раз", duration: 15 },
-            { name: "Повороты корпуса сидя, руки на поясе", duration: 20 },
-            { name: "Глубокий вдох-выдох 3 раза", duration: 12 },
-            { name: "Закрыть глаза и вращать глазными яблоками", duration: 15 },
-            { name: "Сцепить руки за спиной, раскрыть грудь", duration: 15 },
-            { name: "Круговые движения стопами 5 раз в каждую сторону", duration: 20 },
-            { name: "Подтянуть колено к груди (поочерёдно) 4 раза", duration: 20 },
-            { name: "Наклоны головы к плечу (лево-право) 6 раз", duration: 15 },
-            { name: "Сжимание и разжимание кулаков с силой", duration: 10 },
-            { name: "Подъём рук в стороны до горизонтали 8 раз", duration: 15 },
-            { name: "Вращение тазом сидя 5 раз в каждую сторону", duration: 15 },
-            { name: "Потянуться всем телом вверх на 5 секунд", duration: 10 },
-            { name: "Круговые движения головой плавно 4 раза", duration: 20 },
-            { name: "Отвести локти назад, сводя лопатки — 6 раз", duration: 18 },
-            { name: "Сидя, поднять ногу параллельно полу, удержать 5 сек", duration: 20 },
-            { name: "Пальцы в замок, вывернуть ладонями вперёд и потянуться", duration: 12 },
-            { name: "Наклон корпуса вперёд сидя, спина прямая", duration: 12 },
-            { name: "Повороты головы с сопротивлением (ладонь на щеке)", duration: 15 },
-            { name: "Сидя, поднять пятки, перенести вес на носки 10 раз", duration: 15 },
-            { name: "Скрестить руки на груди, разводить локти", duration: 12 },
-            { name: "Открыть рот широко 3 раза (для челюсти)", duration: 8 },
-            { name: "Поднять одно плечо, опустить, затем другое", duration: 15 },
-            { name: "Потянуть шею рукой вниз (мягко) 5 секунд", duration: 12 },
-            { name: "Сидя, подтянуть стопу к себе и от себя 5 раз", duration: 15 },
-            { name: "Руки в стороны, круговые движения кистями", duration: 15 },
-            { name: "Зажмуриться сильно на 3 секунды, открыть — 3 раза", duration: 12 },
-            { name: "Встать, подняться на носки и опуститься 8 раз", duration: 15 }
+        // ---------- ПРОСТЫЕ УПРАЖНЕНИЯ ----------
+        const exerciseList = [
+            "Повернуть голову влево-вправо 5 раз",
+            "Поднять плечи вверх-вниз 10 раз",
+            "Свести лопатки 5 раз",
+            "Наклоны головы вперёд-назад",
+            "Круговые движения кистями",
+            "Встать, потянуться вверх 5 сек",
+            "Подъём на носки 10 раз",
+            "Глубокий вдох-выдох 3 раза"
         ];
+        function getRandomExerciseText() {
+            return exerciseList[Math.floor(Math.random() * exerciseList.length)];
+        }
 
-        // ---------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
-        let currentIntervalMinutes = 60;
-        let activeStart = "09:00";
-        let activeEnd = "18:00";
-        let timerInterval = null;
-        let nextTriggerTime = null;
-        let isRunning = false;
-        let todayCompleted = 0;
-        let dailyGoal = 8;
-
-        // DOM элементы
+        // ---------- DOM ----------
         const exerciseDiv = document.getElementById('exercise');
         const timerDiv = document.getElementById('timer');
         const nextAtDiv = document.getElementById('next-at');
@@ -230,93 +154,111 @@
         const stopBtn = document.getElementById('stopBtn');
         const skipBtn = document.getElementById('skipBtn');
         const doneBtn = document.getElementById('doneBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const resetStatsBtn = document.getElementById('resetStatsBtn');
         const todayCountSpan = document.getElementById('todayCount');
-        const dailyGoalSpan = document.getElementById('dailyGoal');
         const progressFill = document.getElementById('progressFill');
         const motivationText = document.getElementById('motivationText');
         const startTimeInput = document.getElementById('startTime');
         const endTimeInput = document.getElementById('endTime');
         const intervalSelect = document.getElementById('intervalSelect');
-        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-        const resetStatsBtn = document.getElementById('resetStatsBtn');
+        const debugDiv = document.getElementById('debug');
 
-        // ---------- СТАТИСТИКА И НАСТРОЙКИ ----------
+        function log(msg) {
+            debugDiv.innerHTML = `🔍 ${msg}<br>${debugDiv.innerHTML.slice(0, 200)}`;
+            console.log(msg);
+        }
+
+        // ---------- ПЕРЕМЕННЫЕ ----------
+        let isRunning = false;
+        let currentIntervalMinutes = 60;
+        let activeStart = "09:00";
+        let activeEnd = "18:00";
+        let todayCompleted = 0;
+        let dailyGoal = 8;
+        let timerInterval = null;
+        let nextTriggerTime = null;
+
+        // ---------- СТАТИСТИКА ----------
         function loadStats() {
-            const today = new Date().toDateString();
-            const saved = localStorage.getItem('workout_stats');
-            if (saved) {
-                const data = JSON.parse(saved);
-                if (data.date === today) todayCompleted = data.count;
-                else todayCompleted = 0;
-            } else todayCompleted = 0;
-            updateStatsDisplay();
+            try {
+                const today = new Date().toDateString();
+                const saved = localStorage.getItem('workout_stats');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data.date === today) todayCompleted = data.count;
+                    else todayCompleted = 0;
+                } else todayCompleted = 0;
+                updateStatsDisplay();
+                log(`Загружено статистика: ${todayCompleted}`);
+            } catch(e) { log(`Ошибка загрузки статистики: ${e}`); }
         }
         function saveStats() {
-            const today = new Date().toDateString();
-            localStorage.setItem('workout_stats', JSON.stringify({ date: today, count: todayCompleted }));
+            try {
+                const today = new Date().toDateString();
+                localStorage.setItem('workout_stats', JSON.stringify({ date: today, count: todayCompleted }));
+                log(`Сохранено статистика: ${todayCompleted}`);
+            } catch(e) { log(`Ошибка сохранения статистики: ${e}`); }
         }
-        function loadSettings() {
-            const settings = localStorage.getItem('workout_settings');
-            if (settings) {
-                const s = JSON.parse(settings);
-                activeStart = s.start || "09:00";
-                activeEnd = s.end || "18:00";
-                currentIntervalMinutes = s.interval || 60;
-                startTimeInput.value = activeStart;
-                endTimeInput.value = activeEnd;
-                intervalSelect.value = currentIntervalMinutes;
-            } else {
-                startTimeInput.value = "09:00";
-                endTimeInput.value = "18:00";
-                intervalSelect.value = "60";
-            }
-        }
-        function saveSettings() {
-            activeStart = startTimeInput.value;
-            activeEnd = endTimeInput.value;
-            currentIntervalMinutes = parseInt(intervalSelect.value);
-            localStorage.setItem('workout_settings', JSON.stringify({
-                start: activeStart, end: activeEnd, interval: currentIntervalMinutes
-            }));
-            if (isRunning) {
-                stopReminders();
-                startReminders();
-            }
-            alert("Настройки сохранены");
+        function updateStatsDisplay() {
+            todayCountSpan.innerText = todayCompleted;
+            const percent = Math.min(100, (todayCompleted / dailyGoal) * 100);
+            progressFill.style.width = percent + "%";
+            if (todayCompleted >= dailyGoal) motivationText.innerText = "🏆 Ты чемпион!";
+            else motivationText.innerText = `Осталось ${dailyGoal - todayCompleted} до цели`;
         }
         function incrementStats() {
             todayCompleted++;
             saveStats();
             updateStatsDisplay();
-            if (todayCompleted >= dailyGoal && todayCompleted - 1 < dailyGoal) {
-                motivationText.innerText = "🎉 Ты сегодня супер! Цель достигнута! 🎉";
-                setTimeout(() => { if (todayCompleted >= dailyGoal) motivationText.innerText = "🔥 Ты огонь! Продолжай в том же духе!"; }, 3000);
-            } else updateMotivationText();
-        }
-        function updateStatsDisplay() {
-            todayCountSpan.innerText = todayCompleted;
-            dailyGoalSpan.innerText = dailyGoal;
-            const percent = Math.min(100, (todayCompleted / dailyGoal) * 100);
-            progressFill.style.width = percent + "%";
-            updateMotivationText();
-        }
-        function updateMotivationText() {
-            if (todayCompleted >= dailyGoal) motivationText.innerText = "🏆 Ты абсолютный чемпион! 🏆";
-            else if (todayCompleted >= dailyGoal * 0.75) motivationText.innerText = "⭐ Ещё немного, и ты звёздочка! ⭐";
-            else if (todayCompleted >= dailyGoal * 0.5) motivationText.innerText = "💪 Отлично, половина пути! Дерзай!";
-            else if (todayCompleted >= dailyGoal * 0.25) motivationText.innerText = "🌱 Хороший старт, продолжай в том же духе!";
-            else motivationText.innerText = "👋 Сделай первое упражнение, и ты уже в деле!";
+            log(`Упражнение засчитано, всего: ${todayCompleted}`);
         }
         function resetStats() {
-            if (confirm("Сбросить счётчик упражнений за сегодня?")) {
+            if (confirm("Сбросить счёт?")) {
                 todayCompleted = 0;
                 saveStats();
                 updateStatsDisplay();
-                motivationText.innerText = "Счёт сброшен. Начни новую серию!";
+                log("Счёт сброшен");
             }
         }
 
-        // ---------- ПРОВЕРКА АКТИВНОГО ВРЕМЕНИ ----------
+        // ---------- НАСТРОЙКИ ----------
+        function loadSettings() {
+            try {
+                const settings = localStorage.getItem('workout_settings');
+                if (settings) {
+                    const s = JSON.parse(settings);
+                    activeStart = s.start || "09:00";
+                    activeEnd = s.end || "18:00";
+                    currentIntervalMinutes = s.interval || 60;
+                    startTimeInput.value = activeStart;
+                    endTimeInput.value = activeEnd;
+                    intervalSelect.value = currentIntervalMinutes;
+                    log(`Настройки загружены: ${activeStart}-${activeEnd}, интервал ${currentIntervalMinutes} мин`);
+                } else {
+                    log("Настроек нет, используем по умолчанию");
+                }
+            } catch(e) { log(`Ошибка загрузки настроек: ${e}`); }
+        }
+        function saveSettings() {
+            try {
+                activeStart = startTimeInput.value;
+                activeEnd = endTimeInput.value;
+                currentIntervalMinutes = parseInt(intervalSelect.value);
+                localStorage.setItem('workout_settings', JSON.stringify({
+                    start: activeStart, end: activeEnd, interval: currentIntervalMinutes
+                }));
+                log(`Настройки сохранены: ${activeStart}-${activeEnd}, интервал ${currentIntervalMinutes}`);
+                alert("Настройки сохранены!");
+                if (isRunning) {
+                    // перезапуск напоминаний
+                    stopReminders();
+                    startReminders();
+                }
+            } catch(e) { log(`Ошибка сохранения настроек: ${e}`); }
+        }
+
+        // ---------- ЛОГИКА НАПОМИНАНИЙ ----------
         function isWithinActiveTime() {
             const now = new Date();
             const current = now.getHours() * 60 + now.getMinutes();
@@ -324,14 +266,26 @@
             const [endH, endM] = activeEnd.split(":").map(Number);
             const startTotal = startH * 60 + startM;
             let endTotal = endH * 60 + endM;
-            if (endTotal <= startTotal) endTotal += 24 * 60; // через полночь (редко)
+            if (endTotal <= startTotal) endTotal += 24 * 60;
             return current >= startTotal && current < endTotal;
         }
 
-        // ---------- УПРАЖНЕНИЯ ----------
-        function getRandomExercise() {
-            return exercises[Math.floor(Math.random() * exercises.length)];
+        function showExerciseNow() {
+            if (!isRunning) return;
+            if (!isWithinActiveTime()) {
+                exerciseDiv.innerHTML = "⏸ Неактивное время, следующая проверка через минуту";
+                scheduleNext(1);
+                return;
+            }
+            const exText = getRandomExerciseText();
+            exerciseDiv.innerHTML = `🏋️ ${exText}<br><span style="font-size:14px;">Выполняйте 15 секунд</span>`;
+            startCountdown(15);
+            if (Notification.permission === "granted") {
+                new Notification("Пора размяться!", { body: exText });
+            }
+            log("Показано упражнение: " + exText);
         }
+
         function startCountdown(seconds) {
             if (timerInterval) clearInterval(timerInterval);
             let remaining = seconds;
@@ -340,24 +294,14 @@
                 remaining--;
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
-                    timerDiv.innerText = `✅ Готово!`;
+                    timerDiv.innerText = "✅ Готово!";
                     incrementStats();
-                } else timerDiv.innerText = `${remaining} сек`;
+                } else {
+                    timerDiv.innerText = `${remaining} сек`;
+                }
             }, 1000);
         }
-        function showExerciseNow() {
-            if (!isRunning) return;
-            if (!isWithinActiveTime()) {
-                scheduleNext(1);
-                return;
-            }
-            const ex = getRandomExercise();
-            exerciseDiv.innerHTML = `🏋️ ${ex.name}<br><span style="font-size:14px; font-weight:normal;">Выполняйте ${ex.duration} секунд</span>`;
-            startCountdown(ex.duration);
-            if (Notification.permission === "granted") {
-                new Notification("🧘 Пора размяться!", { body: ex.name, icon: "https://cdn-icons-png.flaticon.com/512/2964/2964517.png" });
-            }
-        }
+
         function scheduleNext(delayMinutes = null) {
             if (nextTriggerTime) clearTimeout(nextTriggerTime);
             const interval = (delayMinutes !== null) ? delayMinutes : currentIntervalMinutes;
@@ -370,73 +314,79 @@
             }, delayMs);
             if (isRunning) {
                 const nextDate = new Date(Date.now() + delayMs);
-                nextAtDiv.innerHTML = `⏰ Следующее напоминание: ${nextDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-            } else nextAtDiv.innerHTML = `⏸ Напоминания остановлены`;
+                nextAtDiv.innerHTML = `⏰ Следующее: ${nextDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+            } else {
+                nextAtDiv.innerHTML = "⏸ Остановлено";
+            }
         }
+
         function startReminders() {
+            log("startReminders вызвана");
             if (isRunning) return;
             isRunning = true;
             if (isWithinActiveTime()) {
                 showExerciseNow();
                 scheduleNext();
             } else {
-                exerciseDiv.innerHTML = `🕒 Сейчас неактивное время (${activeStart}–${activeEnd}). Напоминания начнутся позже.`;
+                exerciseDiv.innerHTML = `🕒 Неактивное время (${activeStart}–${activeEnd}). Ждём...`;
                 scheduleNext(1);
             }
+            log("Напоминания запущены");
         }
+
         function stopReminders() {
+            log("stopReminders вызвана");
             isRunning = false;
             if (nextTriggerTime) clearTimeout(nextTriggerTime);
             if (timerInterval) clearInterval(timerInterval);
             nextTriggerTime = null;
             timerInterval = null;
             timerDiv.innerText = "--:--";
-            nextAtDiv.innerHTML = "⏸ Напоминания остановлены";
+            nextAtDiv.innerHTML = "⏸ Остановлено";
             exerciseDiv.innerHTML = "👉 Нажмите «Старт»";
         }
+
         function skipExercise() {
-            if (!isRunning) return;
+            log("skipExercise вызвана");
+            if (!isRunning) { log("Не запущено, пропуск не работает"); return; }
             if (timerInterval) clearInterval(timerInterval);
-            const ex = getRandomExercise();
-            exerciseDiv.innerHTML = `🏋️ ${ex.name}<br><span style="font-size:14px; font-weight:normal;">Выполняйте ${ex.duration} секунд</span>`;
-            startCountdown(ex.duration);
+            const exText = getRandomExerciseText();
+            exerciseDiv.innerHTML = `🏋️ ${exText}<br><span style="font-size:14px;">Выполняйте 15 секунд</span>`;
+            startCountdown(15);
         }
+
         function doneAndReset() {
-            if (!isRunning) return;
+            log("doneAndReset вызвана");
+            if (!isRunning) { log("Не запущено, кнопка Сделано не активна"); return; }
             incrementStats();
             if (timerInterval) clearInterval(timerInterval);
             timerDiv.innerText = "--:--";
-            exerciseDiv.innerHTML = `✅ Молодец! Следующее напоминание через ${currentIntervalMinutes} мин.`;
+            exerciseDiv.innerHTML = `✅ Молодец! Следующее через ${currentIntervalMinutes} мин.`;
             if (nextTriggerTime) clearTimeout(nextTriggerTime);
             scheduleNext();
         }
 
-        // ---------- УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК ДЛЯ МОБИЛЬНЫХ ----------
-        function addButtonHandler(button, handler) {
-            if (!button) return;
-            // Для мобильных: touchstart срабатывает быстрее, но чтобы не было дублей, используем оба
-            button.addEventListener('click', (e) => { e.preventDefault(); handler(); });
-            button.addEventListener('touchstart', (e) => { e.preventDefault(); handler(); });
+        // ---------- ПРИВЯЗКА КНОПОК (click + touchstart) ----------
+        function addHandler(btn, handler) {
+            if (!btn) return;
+            btn.addEventListener('click', (e) => { e.preventDefault(); handler(); });
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); handler(); });
+            log(`Обработчик добавлен для ${btn.id || btn.innerText}`);
         }
 
         // ---------- ИНИЦИАЛИЗАЦИЯ ----------
         function init() {
+            log("Инициализация...");
             loadStats();
             loadSettings();
-            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-                Notification.requestPermission();
-            }
-            // Привязываем обработчики с поддержкой touch
-            addButtonHandler(startBtn, startReminders);
-            addButtonHandler(stopBtn, stopReminders);
-            addButtonHandler(skipBtn, skipExercise);
-            addButtonHandler(doneBtn, doneAndReset);
-            addButtonHandler(saveSettingsBtn, saveSettings);
-            addButtonHandler(resetStatsBtn, resetStats);
-
-            isRunning = false;
-            nextAtDiv.innerHTML = "⏸ Нажмите Старт";
-            exerciseDiv.innerHTML = "👉 Нажмите «Старт»";
+            if (Notification.permission === "default") Notification.requestPermission();
+            addHandler(startBtn, startReminders);
+            addHandler(stopBtn, stopReminders);
+            addHandler(skipBtn, skipExercise);
+            addHandler(doneBtn, doneAndReset);
+            addHandler(saveSettingsBtn, saveSettings);
+            addHandler(resetStatsBtn, resetStats);
+            log("Готово. Кнопки должны работать.");
         }
         init();
     })();
