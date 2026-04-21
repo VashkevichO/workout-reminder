@@ -37,6 +37,10 @@
             cursor: pointer;
             font-weight: 600;
             transition: background 0.2s;
+            position: relative;
+            z-index: 10;
+            touch-action: manipulation;
+            -webkit-appearance: none;
         }
         button:active {
             background: #0044cc;
@@ -209,12 +213,12 @@
         ];
 
         // ---------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
-        let currentIntervalMinutes = 60;     // выбранный интервал
+        let currentIntervalMinutes = 60;
         let activeStart = "09:00";
         let activeEnd = "18:00";
-        let timerInterval = null;             // для обратного отсчёта на экране
-        let nextTriggerTime = null;            // setTimeout следующего напоминания
-        let isRunning = false;                 // запущен ли таймер
+        let timerInterval = null;
+        let nextTriggerTime = null;
+        let isRunning = false;
         let todayCompleted = 0;
         let dailyGoal = 8;
 
@@ -236,28 +240,21 @@
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         const resetStatsBtn = document.getElementById('resetStatsBtn');
 
-        // ---------- СТАТИСТИКА И НАСТРОЙКИ (localStorage) ----------
+        // ---------- СТАТИСТИКА И НАСТРОЙКИ ----------
         function loadStats() {
             const today = new Date().toDateString();
             const saved = localStorage.getItem('workout_stats');
             if (saved) {
                 const data = JSON.parse(saved);
-                if (data.date === today) {
-                    todayCompleted = data.count;
-                } else {
-                    todayCompleted = 0;
-                }
-            } else {
-                todayCompleted = 0;
-            }
+                if (data.date === today) todayCompleted = data.count;
+                else todayCompleted = 0;
+            } else todayCompleted = 0;
             updateStatsDisplay();
         }
-
         function saveStats() {
             const today = new Date().toDateString();
             localStorage.setItem('workout_stats', JSON.stringify({ date: today, count: todayCompleted }));
         }
-
         function loadSettings() {
             const settings = localStorage.getItem('workout_settings');
             if (settings) {
@@ -272,43 +269,30 @@
                 startTimeInput.value = "09:00";
                 endTimeInput.value = "18:00";
                 intervalSelect.value = "60";
-                activeStart = "09:00";
-                activeEnd = "18:00";
-                currentIntervalMinutes = 60;
             }
-            // Отметить активную кнопку интервала (только для визуального соответствия, но теперь интервал берётся из select)
         }
-
         function saveSettings() {
             activeStart = startTimeInput.value;
             activeEnd = endTimeInput.value;
             currentIntervalMinutes = parseInt(intervalSelect.value);
             localStorage.setItem('workout_settings', JSON.stringify({
-                start: activeStart,
-                end: activeEnd,
-                interval: currentIntervalMinutes
+                start: activeStart, end: activeEnd, interval: currentIntervalMinutes
             }));
-            // Если таймер запущен, перезапускаем его с новыми настройками
             if (isRunning) {
                 stopReminders();
                 startReminders();
             }
             alert("Настройки сохранены");
         }
-
         function incrementStats() {
             todayCompleted++;
             saveStats();
             updateStatsDisplay();
-            // Если достигли цели, показываем поздравление
             if (todayCompleted >= dailyGoal && todayCompleted - 1 < dailyGoal) {
                 motivationText.innerText = "🎉 Ты сегодня супер! Цель достигнута! 🎉";
                 setTimeout(() => { if (todayCompleted >= dailyGoal) motivationText.innerText = "🔥 Ты огонь! Продолжай в том же духе!"; }, 3000);
-            } else {
-                updateMotivationText();
-            }
+            } else updateMotivationText();
         }
-
         function updateStatsDisplay() {
             todayCountSpan.innerText = todayCompleted;
             dailyGoalSpan.innerText = dailyGoal;
@@ -316,21 +300,13 @@
             progressFill.style.width = percent + "%";
             updateMotivationText();
         }
-
         function updateMotivationText() {
-            if (todayCompleted >= dailyGoal) {
-                motivationText.innerText = "🏆 Ты абсолютный чемпион! 🏆";
-            } else if (todayCompleted >= dailyGoal * 0.75) {
-                motivationText.innerText = "⭐ Ещё немного, и ты звёздочка! ⭐";
-            } else if (todayCompleted >= dailyGoal * 0.5) {
-                motivationText.innerText = "💪 Отлично, половина пути! Дерзай!";
-            } else if (todayCompleted >= dailyGoal * 0.25) {
-                motivationText.innerText = "🌱 Хороший старт, продолжай в том же духе!";
-            } else {
-                motivationText.innerText = "👋 Сделай первое упражнение, и ты уже в деле!";
-            }
+            if (todayCompleted >= dailyGoal) motivationText.innerText = "🏆 Ты абсолютный чемпион! 🏆";
+            else if (todayCompleted >= dailyGoal * 0.75) motivationText.innerText = "⭐ Ещё немного, и ты звёздочка! ⭐";
+            else if (todayCompleted >= dailyGoal * 0.5) motivationText.innerText = "💪 Отлично, половина пути! Дерзай!";
+            else if (todayCompleted >= dailyGoal * 0.25) motivationText.innerText = "🌱 Хороший старт, продолжай в том же духе!";
+            else motivationText.innerText = "👋 Сделай первое упражнение, и ты уже в деле!";
         }
-
         function resetStats() {
             if (confirm("Сбросить счётчик упражнений за сегодня?")) {
                 todayCompleted = 0;
@@ -348,32 +324,14 @@
             const [endH, endM] = activeEnd.split(":").map(Number);
             const startTotal = startH * 60 + startM;
             let endTotal = endH * 60 + endM;
-            // Если конец меньше начала (например, 18:00 до 09:00?) – не поддерживаем, считаем что конец всегда больше
-            if (endTotal <= startTotal) endTotal += 24 * 60; // но это для случаев через полночь, упростим: считаем только в рамках одного дня
+            if (endTotal <= startTotal) endTotal += 24 * 60; // через полночь (редко)
             return current >= startTotal && current < endTotal;
         }
 
-        // ---------- УПРАВЛЕНИЕ НАПОМИНАНИЯМИ ----------
+        // ---------- УПРАЖНЕНИЯ ----------
         function getRandomExercise() {
             return exercises[Math.floor(Math.random() * exercises.length)];
         }
-
-        function showExerciseNow() {
-            if (!isRunning) return;
-            if (!isWithinActiveTime()) {
-                // В неактивное время не показываем упражнение, но перепланируем через минуту, чтобы проверить снова
-                scheduleNext(1); // проверим через минуту
-                return;
-            }
-            const ex = getRandomExercise();
-            exerciseDiv.innerHTML = `🏋️ ${ex.name}<br><span style="font-size:14px; font-weight:normal;">Выполняйте ${ex.duration} секунд</span>`;
-            startCountdown(ex.duration);
-            // Уведомление
-            if (Notification.permission === "granted") {
-                new Notification("🧘 Пора размяться!", { body: ex.name, icon: "https://cdn-icons-png.flaticon.com/512/2964/2964517.png" });
-            }
-        }
-
         function startCountdown(seconds) {
             if (timerInterval) clearInterval(timerInterval);
             let remaining = seconds;
@@ -383,13 +341,23 @@
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
                     timerDiv.innerText = `✅ Готово!`;
-                    incrementStats();  // автоматически засчитываем, если досидели до конца
-                } else {
-                    timerDiv.innerText = `${remaining} сек`;
-                }
+                    incrementStats();
+                } else timerDiv.innerText = `${remaining} сек`;
             }, 1000);
         }
-
+        function showExerciseNow() {
+            if (!isRunning) return;
+            if (!isWithinActiveTime()) {
+                scheduleNext(1);
+                return;
+            }
+            const ex = getRandomExercise();
+            exerciseDiv.innerHTML = `🏋️ ${ex.name}<br><span style="font-size:14px; font-weight:normal;">Выполняйте ${ex.duration} секунд</span>`;
+            startCountdown(ex.duration);
+            if (Notification.permission === "granted") {
+                new Notification("🧘 Пора размяться!", { body: ex.name, icon: "https://cdn-icons-png.flaticon.com/512/2964/2964517.png" });
+            }
+        }
         function scheduleNext(delayMinutes = null) {
             if (nextTriggerTime) clearTimeout(nextTriggerTime);
             const interval = (delayMinutes !== null) ? delayMinutes : currentIntervalMinutes;
@@ -397,30 +365,25 @@
             nextTriggerTime = setTimeout(() => {
                 if (isRunning) {
                     showExerciseNow();
-                    scheduleNext(); // запланировать следующее
+                    scheduleNext();
                 }
             }, delayMs);
             if (isRunning) {
                 const nextDate = new Date(Date.now() + delayMs);
                 nextAtDiv.innerHTML = `⏰ Следующее напоминание: ${nextDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-            } else {
-                nextAtDiv.innerHTML = `⏸ Напоминания остановлены`;
-            }
+            } else nextAtDiv.innerHTML = `⏸ Напоминания остановлены`;
         }
-
         function startReminders() {
             if (isRunning) return;
             isRunning = true;
-            // Если сейчас активное время, показываем упражнение сразу, иначе просто планируем с проверкой через минуту
             if (isWithinActiveTime()) {
                 showExerciseNow();
                 scheduleNext();
             } else {
                 exerciseDiv.innerHTML = `🕒 Сейчас неактивное время (${activeStart}–${activeEnd}). Напоминания начнутся позже.`;
-                scheduleNext(1); // проверяем каждую минуту, не наступило ли активное время
+                scheduleNext(1);
             }
         }
-
         function stopReminders() {
             isRunning = false;
             if (nextTriggerTime) clearTimeout(nextTriggerTime);
@@ -431,50 +394,50 @@
             nextAtDiv.innerHTML = "⏸ Напоминания остановлены";
             exerciseDiv.innerHTML = "👉 Нажмите «Старт»";
         }
-
         function skipExercise() {
             if (!isRunning) return;
             if (timerInterval) clearInterval(timerInterval);
             const ex = getRandomExercise();
             exerciseDiv.innerHTML = `🏋️ ${ex.name}<br><span style="font-size:14px; font-weight:normal;">Выполняйте ${ex.duration} секунд</span>`;
             startCountdown(ex.duration);
-            // Не увеличиваем счётчик, так как это пропуск
         }
-
         function doneAndReset() {
             if (!isRunning) return;
-            // Засчитываем упражнение (пользователь нажал, что сделал)
             incrementStats();
-            // Сбрасываем текущий таймер обратного отсчёта
             if (timerInterval) clearInterval(timerInterval);
             timerDiv.innerText = "--:--";
             exerciseDiv.innerHTML = `✅ Молодец! Следующее напоминание через ${currentIntervalMinutes} мин.`;
-            // Перезапускаем расписание (сбрасываем старый таймер и ставим новый)
             if (nextTriggerTime) clearTimeout(nextTriggerTime);
             scheduleNext();
+        }
+
+        // ---------- УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК ДЛЯ МОБИЛЬНЫХ ----------
+        function addButtonHandler(button, handler) {
+            if (!button) return;
+            // Для мобильных: touchstart срабатывает быстрее, но чтобы не было дублей, используем оба
+            button.addEventListener('click', (e) => { e.preventDefault(); handler(); });
+            button.addEventListener('touchstart', (e) => { e.preventDefault(); handler(); });
         }
 
         // ---------- ИНИЦИАЛИЗАЦИЯ ----------
         function init() {
             loadStats();
             loadSettings();
-            // Запрос уведомлений
             if (Notification.permission !== "granted" && Notification.permission !== "denied") {
                 Notification.requestPermission();
             }
-            // Обработчики кнопок
-            startBtn.addEventListener('click', startReminders);
-            stopBtn.addEventListener('click', stopReminders);
-            skipBtn.addEventListener('click', skipExercise);
-            doneBtn.addEventListener('click', doneAndReset);
-            saveSettingsBtn.addEventListener('click', saveSettings);
-            resetStatsBtn.addEventListener('click', resetStats);
-            // Изначально таймер не запущен
+            // Привязываем обработчики с поддержкой touch
+            addButtonHandler(startBtn, startReminders);
+            addButtonHandler(stopBtn, stopReminders);
+            addButtonHandler(skipBtn, skipExercise);
+            addButtonHandler(doneBtn, doneAndReset);
+            addButtonHandler(saveSettingsBtn, saveSettings);
+            addButtonHandler(resetStatsBtn, resetStats);
+
             isRunning = false;
             nextAtDiv.innerHTML = "⏸ Нажмите Старт";
             exerciseDiv.innerHTML = "👉 Нажмите «Старт»";
         }
-
         init();
     })();
 </script>
