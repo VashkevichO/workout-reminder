@@ -25,7 +25,9 @@
             margin: 16px 0;
             box-shadow: 0 8px 20px rgba(0,0,0,0.05);
         }
-        button {
+        /* Стили для div-кнопок */
+        .btn {
+            display: inline-block;
             background: #0066ff;
             border: none;
             color: white;
@@ -33,15 +35,16 @@
             padding: 12px 24px;
             border-radius: 40px;
             margin: 8px;
-            cursor: pointer;
             font-weight: 600;
             touch-action: manipulation;
+            cursor: pointer;
+            text-align: center;
             -webkit-appearance: none;
         }
-        button:active {
+        .btn:active {
             background: #0044cc;
         }
-        .control-btn {
+        .btn-secondary {
             background: #e0e7ff;
             color: #1e293b;
         }
@@ -85,6 +88,7 @@
             border-radius: 16px;
             margin-top: 10px;
             word-break: break-all;
+            text-align: left;
         }
     </style>
 </head>
@@ -104,7 +108,7 @@
                 <option value="120">2 часа</option>
             </select>
         </label>
-        <button id="saveSettingsBtn" class="control-btn">💾 Сохранить</button>
+        <div class="btn btn-secondary" id="saveSettingsBtn">💾 Сохранить</div>
     </div>
 </div>
 
@@ -112,10 +116,10 @@
     <div id="exercise">👉 Нажмите «Старт»</div>
     <div id="timer">--:--</div>
     <div class="flex-row">
-        <button id="startBtn">▶ Старт</button>
-        <button id="stopBtn">⏹ Стоп</button>
-        <button id="skipBtn" class="control-btn">⏩ Следующее</button>
-        <button id="doneBtn" class="control-btn">✅ Сделано</button>
+        <div class="btn" id="startBtn">▶ Старт</div>
+        <div class="btn" id="stopBtn">⏹ Стоп</div>
+        <div class="btn btn-secondary" id="skipBtn">⏩ Следующее</div>
+        <div class="btn btn-secondary" id="doneBtn">✅ Сделано</div>
     </div>
     <div id="next-at"></div>
 </div>
@@ -124,14 +128,14 @@
     <div>🏆 Сегодня: <span id="todayCount">0</span> / <span id="dailyGoal">8</span></div>
     <div class="progress-container"><div class="progress-fill" id="progressFill"></div></div>
     <div id="motivationText"></div>
-    <button id="resetStatsBtn" class="control-btn">Сбросить счёт</button>
+    <div class="btn btn-secondary" id="resetStatsBtn">Сбросить счёт</div>
 </div>
 
 <div id="debug">🔍 Отладка: готово</div>
 
 <script>
     (function() {
-        // ---------- ПРОСТЫЕ УПРАЖНЕНИЯ ----------
+        // ---------- УПРОЩЁННЫЕ УПРАЖНЕНИЯ ----------
         const exerciseList = [
             "Повернуть голову влево-вправо 5 раз",
             "Поднять плечи вверх-вниз 10 раз",
@@ -146,7 +150,7 @@
             return exerciseList[Math.floor(Math.random() * exerciseList.length)];
         }
 
-        // ---------- DOM ----------
+        // ---------- DOM ЭЛЕМЕНТЫ ----------
         const exerciseDiv = document.getElementById('exercise');
         const timerDiv = document.getElementById('timer');
         const nextAtDiv = document.getElementById('next-at');
@@ -165,11 +169,12 @@
         const debugDiv = document.getElementById('debug');
 
         function log(msg) {
-            debugDiv.innerHTML = `🔍 ${msg}<br>${debugDiv.innerHTML.slice(0, 200)}`;
+            const time = new Date().toLocaleTimeString();
+            debugDiv.innerHTML = `🔍 ${time} ${msg}<br>${debugDiv.innerHTML.slice(0, 500)}`;
             console.log(msg);
         }
 
-        // ---------- ПЕРЕМЕННЫЕ ----------
+        // ---------- ПЕРЕМЕННЫЕ СОСТОЯНИЯ ----------
         let isRunning = false;
         let currentIntervalMinutes = 60;
         let activeStart = "09:00";
@@ -179,7 +184,7 @@
         let timerInterval = null;
         let nextTriggerTime = null;
 
-        // ---------- СТАТИСТИКА ----------
+        // ---------- СТАТИСТИКА (localStorage) ----------
         function loadStats() {
             try {
                 const today = new Date().toDateString();
@@ -190,15 +195,15 @@
                     else todayCompleted = 0;
                 } else todayCompleted = 0;
                 updateStatsDisplay();
-                log(`Загружено статистика: ${todayCompleted}`);
-            } catch(e) { log(`Ошибка загрузки статистики: ${e}`); }
+                log(`Статистика загружена: ${todayCompleted}`);
+            } catch(e) { log(`Ошибка статистики: ${e}`); }
         }
         function saveStats() {
             try {
                 const today = new Date().toDateString();
                 localStorage.setItem('workout_stats', JSON.stringify({ date: today, count: todayCompleted }));
-                log(`Сохранено статистика: ${todayCompleted}`);
-            } catch(e) { log(`Ошибка сохранения статистики: ${e}`); }
+                log(`Сохранено: ${todayCompleted}`);
+            } catch(e) { log(`Ошибка сохранения: ${e}`); }
         }
         function updateStatsDisplay() {
             todayCountSpan.innerText = todayCompleted;
@@ -234,11 +239,11 @@
                     startTimeInput.value = activeStart;
                     endTimeInput.value = activeEnd;
                     intervalSelect.value = currentIntervalMinutes;
-                    log(`Настройки загружены: ${activeStart}-${activeEnd}, интервал ${currentIntervalMinutes} мин`);
+                    log(`Настройки загружены: ${activeStart}-${activeEnd}, интервал ${currentIntervalMinutes}`);
                 } else {
-                    log("Настроек нет, используем по умолчанию");
+                    log("Настроек нет, дефолт");
                 }
-            } catch(e) { log(`Ошибка загрузки настроек: ${e}`); }
+            } catch(e) { log(`Ошибка настроек: ${e}`); }
         }
         function saveSettings() {
             try {
@@ -251,7 +256,6 @@
                 log(`Настройки сохранены: ${activeStart}-${activeEnd}, интервал ${currentIntervalMinutes}`);
                 alert("Настройки сохранены!");
                 if (isRunning) {
-                    // перезапуск напоминаний
                     stopReminders();
                     startReminders();
                 }
@@ -366,12 +370,30 @@
             scheduleNext();
         }
 
-        // ---------- ПРИВЯЗКА КНОПОК (click + touchstart) ----------
-        function addHandler(btn, handler) {
-            if (!btn) return;
-            btn.addEventListener('click', (e) => { e.preventDefault(); handler(); });
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); handler(); });
-            log(`Обработчик добавлен для ${btn.id || btn.innerText}`);
+        // ---------- ПРИВЯЗКА ОБРАБОТЧИКОВ (самый надёжный способ) ----------
+        function addHandler(element, handler) {
+            if (!element) return;
+            // Используем оба события для максимальной совместимости
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handler();
+            });
+            element.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handler();
+            });
+            log(`Обработчик добавлен для ${element.id || element.className}`);
+        }
+
+        function bindAllHandlers() {
+            addHandler(startBtn, startReminders);
+            addHandler(stopBtn, stopReminders);
+            addHandler(skipBtn, skipExercise);
+            addHandler(doneBtn, doneAndReset);
+            addHandler(saveSettingsBtn, saveSettings);
+            addHandler(resetStatsBtn, resetStats);
         }
 
         // ---------- ИНИЦИАЛИЗАЦИЯ ----------
@@ -380,13 +402,8 @@
             loadStats();
             loadSettings();
             if (Notification.permission === "default") Notification.requestPermission();
-            addHandler(startBtn, startReminders);
-            addHandler(stopBtn, stopReminders);
-            addHandler(skipBtn, skipExercise);
-            addHandler(doneBtn, doneAndReset);
-            addHandler(saveSettingsBtn, saveSettings);
-            addHandler(resetStatsBtn, resetStats);
-            log("Готово. Кнопки должны работать.");
+            bindAllHandlers();
+            log("Готово. Кнопки (div) должны работать. Нажмите на любую кнопку.");
         }
         init();
     })();
