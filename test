@@ -11,6 +11,17 @@
     </style>
 </head>
 <body>
+    <div style="background:red; color:white; padding:10px; margin:10px; border-radius:20px;" id="testBlock">
+    ТЕСТ: Нажми сюда
+</div>
+<script>
+    document.getElementById('testBlock').addEventListener('click', function() {
+        alert('✅ Клик сработал! JavaScript работает.');
+    });
+    document.getElementById('testBlock').addEventListener('touchstart', function() {
+        alert('✅ Touchstart сработал!');
+    });
+</script>
     <h1>Тест нажатий</h1>
     <button id="nativeBtn">Нативная кнопка</button>
     <div id="divBtn" class="btn">Div-кнопка</div>
