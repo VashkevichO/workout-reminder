@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест кликов</title>
+    <style>
+        body { padding: 20px; font-family: sans-serif; text-align: center; }
+        button, div.btn { padding: 20px; margin: 10px; font-size: 20px; background: #0066ff; color: white; border: none; border-radius: 20px; }
+        #log { background: #f0f0f0; padding: 10px; margin-top: 20px; text-align: left; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>Тест нажатий</h1>
+    <button id="nativeBtn">Нативная кнопка</button>
+    <div id="divBtn" class="btn">Div-кнопка</div>
+    <div id="log">Лог:</div>
+
+    <script>
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<br>${new Date().toLocaleTimeString()} - ${msg}`;
+            console.log(msg);
+        }
+
+        document.getElementById('nativeBtn').addEventListener('click', () => log('Нативная кнопка нажата'));
+        document.getElementById('nativeBtn').addEventListener('touchstart', () => log('Нативная кнопка touchstart'));
+        document.getElementById('divBtn').addEventListener('click', () => log('Div-кнопка нажата'));
+        document.getElementById('divBtn').addEventListener('touchstart', () => log('Div-кнопка touchstart'));
+        log('Страница загружена, ждём нажатий');
+    </script>
+</body>
+</html>
